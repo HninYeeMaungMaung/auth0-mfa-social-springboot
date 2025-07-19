@@ -1,0 +1,39 @@
+server:
+  port: 9090
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: secret123
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          auth0:
+            client-id: xxxxx
+            client-secret: xxxxx
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email
+            redirect-uri: "{baseUrl}/login/oauth2/code/auth0"
+            provider: auth0
+        provider:
+          auth0:
+            authorization-uri: https://xxxx/authorize
+            token-uri: https://xxxx/oauth/token
+            user-info-uri: https://xxxx/userinfo
+            jwk-set-uri: https://xxxx/.well-known/jwks.json
+            user-name-attribute: sub
