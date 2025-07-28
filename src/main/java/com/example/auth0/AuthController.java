@@ -4,10 +4,20 @@ import com.example.auth0.model.User;
 import com.example.auth0.model.UserDevice;
 import com.example.auth0.repository.UserDeviceRepository;
 import com.example.auth0.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -15,6 +25,9 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final UserDeviceRepository userDeviceRepository;
+
+    @Autowired
+    private OAuth2AuthorizedClientService clientService;
 
     public AuthController(UserRepository userRepository, UserDeviceRepository userDeviceRepository) {
         this.userRepository = userRepository;
@@ -44,4 +57,33 @@ public class AuthController {
 
         return "You have been logged out";
     }
+
+    @GetMapping("/user-profile")
+    public Map<String, Object> profile(@AuthenticationPrincipal Jwt jwt) {
+        return Map.of(
+                "email", jwt.getClaim("email"),
+                "name", jwt.getClaim("name"),
+                "issuer", jwt.getIssuer().toString()
+        );
+    }
+
+    @GetMapping("/token")
+    public String getIdToken(@AuthenticationPrincipal OidcUser principal) {
+        return principal.getIdToken().getTokenValue(); // This is the raw ID token
+    }
+
+    @GetMapping("/forward")
+    public ResponseEntity<String> forwardToken(@AuthenticationPrincipal OidcUser principal, OAuth2AuthenticationToken authentication) {
+        String accessToken = principal.getIdToken().getTokenValue();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken); // SAFER way
+        HttpEntity<?> request = new HttpEntity<>(headers);
+
+        String url = "http://localhost:6060/persons";
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+        return ResponseEntity.ok(response.getBody());
+    }
+
 }

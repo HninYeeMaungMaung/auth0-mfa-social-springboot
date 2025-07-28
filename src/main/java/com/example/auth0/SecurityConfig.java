@@ -18,7 +18,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("/success", true)
+                .defaultSuccessUrl("/forward", true)
             )
             .logout(logout -> logout
                 .logoutSuccessUrl("/")
